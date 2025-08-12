@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 
 
-def build_script(template_path: Path, replacements: dict[str, str | Path], output_path: Path):
+def build_script(template_path: Path, replacements: dict[str, str | Path], output_path: Path, write_newline: str | None = "\r\n"):
     try:
         content = template_path.read_text(encoding="utf-8")
         pattern = r"\$\{([a-zA-Z0-9_]+)\}"
@@ -28,7 +28,7 @@ def build_script(template_path: Path, replacements: dict[str, str | Path], outpu
         updated_content = re.sub(pattern, replacer, content)
 
         output_path.parent.mkdir(exist_ok=True, parents=True)
-        output_path.write_text(updated_content, encoding="utf-8")
+        output_path.write_text(updated_content, encoding="utf-8", newline=write_newline)
 
     except FileNotFoundError as e:
         print(f"Error: {e}")
@@ -109,3 +109,4 @@ def create_zip(src_dir: Path, output_dir: Path, zip_name: str, root_name: str | 
                 file_path = root_path / file
                 arc_file_path = arc_path / file
                 zipf.write(file_path, arc_file_path.as_posix())
+
