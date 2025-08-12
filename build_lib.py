@@ -86,7 +86,7 @@ def create_release_note(readme_dir: Path, output_dir: Path):
 
     content = "## What's Changed\n" + "\n".join(changes) + "\n"
     output_path = output_dir / "release_note.txt"
-    output_path.write_text(content, encoding="utf-8")
+    output_path.write_text(content, encoding="utf-8", newline="\n")
 
 
 def create_zip(src_dir: Path, output_dir: Path, zip_name: str, root_name: str | None = None):
@@ -109,4 +109,5 @@ def create_zip(src_dir: Path, output_dir: Path, zip_name: str, root_name: str | 
                 file_path = root_path / file
                 arc_file_path = arc_path / file
                 zipf.write(file_path, arc_file_path.as_posix())
+
 
