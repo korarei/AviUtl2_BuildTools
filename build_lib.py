@@ -68,7 +68,7 @@ def load_config(path: Path, root: Path) -> Config:
                 "script": dirs["release"] / (project + suffix)
             },
             "replacements": {
-                **{k: Path(v) for k, v in replacements.get("files", {}).items()},
+                **{k: root / Path(v) for k, v in replacements.get("files", {}).items()},
                 **{k: v for k, v in replacements.get("strings", {}).items()},
                 "PROJECT_NAME": project,
                 "VERSION": get_args().version
@@ -176,3 +176,4 @@ def create_zip(src: Path, dst: Path, zip_name: str, root_name: str | None = None
                 file_path = root_path / file
                 arc_file_path = arc_path / file
                 zipf.write(file_path, arc_file_path.as_posix())
+
