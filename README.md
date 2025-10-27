@@ -1,4 +1,4 @@
-# ScriptBuilder
+# BuildTools
 
 特定項目を置換し，AviUtl2で使用可能なスクリプトを作成するPythonプログラム．
 
