@@ -32,7 +32,7 @@
 
 3.  `build_script`を実行．
 
-`config["replacements"]の内容が置換される．`
+`config["replacements"]`の内容が置換される．
 
 ## License
 
