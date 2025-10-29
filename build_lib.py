@@ -109,71 +109,60 @@ def build_script(template: Path, output: Path, replacements: dict[str, str | Pat
         print(f"An unexpected error occurred: {e}")
 
 
-def copy_docs(src: Docs, dst: Path):
+def copy_docs(src: Docs, dst: Path) -> None:
     for _, path in src.items():
         if isinstance(path, Path) and path.exists():
             shutil.copy2(path, dst)
 
 
-def create_release_note(src: Path, dst: Path):
+def create_release_note(src: Path, dst: Path) -> None:
     if not src.exists():
         return
 
     try:
-        lines = src.read_text(encoding="utf-8").splitlines()
+        lines: list[str] = src.read_text(encoding="utf-8").splitlines()
     except Exception as e:
         raise RuntimeError(f"Failed to read {src}: {e}")
 
     try:
-        start_index = next(i for i, line in enumerate(lines) if line.strip() == "## Change Log")
+        idx: int = next(i for i, l in enumerate(lines) if l.strip() == "## Change Log")
     except StopIteration:
         raise ValueError("Missing required section: '## Change Log'")
 
-    lines = lines[start_index + 1:]
+    lines: list[str] = lines[idx + 1:]
 
-    version_header_pattern = re.compile(r"- \*\*(v[\d.]+)\*\*")
-    change_line_pattern = re.compile(r"^\s*-\s(.+)")
+    ver_re: re.Pattern[str] = re.compile(r"- \*\*(v[\d.]+)\*\*")
+    chg_re: re.Pattern[str] = re.compile(r"^\s*-\s(.+)")
 
     changes: list[str] = []
-    found_version = False
-    for line in lines:
-        if version_header_pattern.match(line):
-            if found_version:
+    in_section: bool = False
+    for l in lines:
+        if ver_re.match(l):
+            if in_section:
                 break
-            found_version = True
+
+            in_section = True
             continue
 
-        if found_version:
-            match = change_line_pattern.match(line)
-            if match:
-                changes.append(f"- {match.group(1).strip()}")
+        if in_section and (m := chg_re.match(l)):
+            changes.append(f"- {m.group(1).strip()}")
 
     if not changes:
         return
 
-    content = "## What's Changed\n" + "\n".join(changes) + "\n"
-    output = dst / "release_note.txt"
+    content: str = "## What's Changed\n" + "\n".join(changes) + "\n"
+    output: Path = dst / "release_note.txt"
     output.write_text(content, encoding="utf-8", newline="\n")
 
 
-def create_zip(src: Path, dst: Path, zip_name: str, root_name: str | None = None):
-    if root_name is None:
-        root_name = zip_name
-    
-    output = dst / (zip_name + ".zip")
+def create_zip(src: Path, dst: Path, name: str) -> None:
+    output: Path = dst / f"{name}.zip"
 
-    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, _, files in os.walk(src):
-            root_path = Path(root)
-            rel_path = root_path.relative_to(src)
+    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for curr, _, files in os.walk(src):
+            root: Path = Path(curr)
+            rel: Path = root.relative_to(src)
+            base: Path = Path(name) / rel if rel != Path('.') else Path(name)
 
-            if rel_path == Path('.'):
-                arc_path = Path(root_name)
-            else:
-                arc_path = Path(root_name) / rel_path
-
-            for file in files:
-                file_path = root_path / file
-                arc_file_path = arc_path / file
-                zipf.write(file_path, arc_file_path.as_posix())
-
+            for f in files:
+                zf.write(root / f, (base / f).as_posix())
